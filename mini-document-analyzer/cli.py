@@ -18,7 +18,15 @@ def run_cli():
 
     input_file = sys.argv[1]
 
-    if len(sys.argv) == 3:
+    if not os.path.isfile(input_file) or not input_file.endswith('.txt'):
+        print("Error: Input file must be a valid TXT file")
+        sys.exit(1)
+        
+    if os.stat(input_file).st_size == 0:
+        print(f"Error: {input_file} is empty")
+        sys.exit(1)
+        
+    if len(sys.argv) == 3 and sys.argv[2].endswith('.json'):
         output_file = sys.argv[2]
     else:
         output_file = f"{os.path.splitext(input_file)[0]}.analytics.json"
