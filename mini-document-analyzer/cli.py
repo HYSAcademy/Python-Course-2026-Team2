@@ -32,7 +32,20 @@ def run_cli():
         output_file = f"{os.path.splitext(input_file)[0]}.analytics.json"
     print(f"Input file: {input_file}")
     print(f"Output file: {output_file}")
+    
+     # --- ANALYSIS PIPELINE ---
 
+
+    # --- JSON EXPORT ---
+    
+    
+    export_json(output, output_file)
+    print("Analysis completed successfully.")
+
+
+def export_json(data,output_file):
+    with open(output_file, 'w') as f:
+        json.dump(data, f, indent=4)
 
 # Call the main analysis function from the core module and write results to output file.
 
