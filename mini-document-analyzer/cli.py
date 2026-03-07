@@ -1,12 +1,78 @@
 import json
 import os
-from analyzer import read_file, get_modified_data, get_statistics
+import argparse
+from analyzer.text_reader import read_file
+from analyzer.tokenizer import get_modified_data
+from analyzer.statistics import get_statistics
 from formatter import format_data
 
-content = read_file('path.txt') # Change to input file path
-data = get_modified_data(content)
-statistics = get_statistics(data['tokens'], content)
-output = format_data('path.txt', data, statistics) # Change to input file path
+def validate_input_file(input_file: str) -> bool:
+    """Checks whether the file exists, whether it is a TXT file, and whether it is empty."""
+    if not os.path.isfile(input_file):
+        print(f"Error: File '{input_file}' does not exist.")
+        return False
+    if not input_file.endswith(".txt"):
+        print("Error: Input file must be a TXT file.")
+        return False
+    if os.stat(input_file).st_size == 0:
+        print(f"Error: File '{input_file}' is empty.")
+        return False
+    return True
 
+def get_output_file(input_file: str, output_arg: str | None) -> str:
+    """Returns the path to the JSON output file."""
+    if output_arg:
+        return f"{output_arg}.json" if not output_arg.endswith(".json") else output_arg
+    return f"{os.path.splitext(input_file)[0]}.analysis.json"
+
+def export_json(data, output_file):
+    """Exports data to a JSON file with indentation."""
+    if not data:
+        print("Error: No data to export.")
+        return
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving JSON file: {e}")
 
 def run_cli():
+    """
+    CLI for Mini Document Analyzer.
+
+    Usage:
+        python main.py input.txt
+        python main.py input.txt output.json
+    """
+    parser = argparse.ArgumentParser(description="Mini Document Analyzer")
+    parser.add_argument("input", help="Path to input TXT file")
+    parser.add_argument(
+        "output",
+        nargs="?",  
+        help="Optional output JSON filename"
+    )
+    args = parser.parse_args()
+
+    input_file = args.input
+    output_file = get_output_file(input_file, args.output)
+
+    # --- VALIDATION ---
+    if not validate_input_file(input_file):
+        return
+
+    # --- ANALYSIS PIPELINE ---
+    try:
+        content = read_file(input_file)
+        if not content:
+            return
+        data = get_modified_data(content)
+        statistics = get_statistics(data['tokens'], content)
+        output = format_data(input_file, data, statistics)
+    except Exception as e:
+        print(f"Error during analysis: {e}")
+        return
+
+    # --- JSON EXPORT ---
+    export_json(output, output_file)
+    print(f"Analysis completed successfully. Output saved to '{output_file}'.")
+    return output
