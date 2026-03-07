@@ -25,6 +25,14 @@ def get_output_file(input_file: str, output_arg: str | None) -> str:
         return f"{output_arg}.json" if not output_arg.endswith(".json") else output_arg
     return f"{os.path.splitext(input_file)[0]}.analysis.json"
 
+def export_json(data, output_file):
+    """Експортує дані у JSON файл з відступами."""
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving JSON file: {e}")
+
 
 def run_cli():
     """
@@ -56,7 +64,7 @@ def run_cli():
     statistics = get_statistics(data['tokens'], content)
     output = format_data(input_file, data, statistics)
 
-   
+    export_json(output, output_file)
     print(f"Analysis completed successfully. Output saved to '{output_file}'.")
     return output
 
