@@ -7,7 +7,7 @@ from analyzer.statistics import get_statistics
 from formatter import format_data
 
 def validate_input_file(input_file: str) -> bool:
-    """Перевіряє, чи існує файл, чи це TXT та чи він не порожній."""
+    """Checks whether the file exists, whether it is a TXT file, and whether it is empty."""
     if not os.path.isfile(input_file):
         print(f"Error: File '{input_file}' does not exist.")
         return False
@@ -20,13 +20,13 @@ def validate_input_file(input_file: str) -> bool:
     return True
 
 def get_output_file(input_file: str, output_arg: str | None) -> str:
-    """Повертає шлях до output JSON файлу."""
+    """Returns the path to the JSON output file."""
     if output_arg:
         return f"{output_arg}.json" if not output_arg.endswith(".json") else output_arg
     return f"{os.path.splitext(input_file)[0]}.analysis.json"
 
 def export_json(data, output_file):
-    """Експортує дані у JSON файл з відступами."""
+    """Exports data to a JSON file with indentation."""
     if not data:
         print("Error: No data to export.")
         return
@@ -38,9 +38,9 @@ def export_json(data, output_file):
 
 def run_cli():
     """
-    CLI для Mini Document Analyzer.
+    CLI for Mini Document Analyzer.
 
-    Використання:
+    Usage:
         python main.py input.txt
         python main.py input.txt output.json
     """
