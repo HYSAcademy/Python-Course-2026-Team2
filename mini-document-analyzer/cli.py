@@ -1,9 +1,10 @@
 import json
 import os
 import argparse
-from analyzer import read_file, get_modified_data, get_statistics
+from analyzer.text_reader import read_file
+from analyzer.tokenizer import get_modified_data
+from analyzer.statistics import get_statistics
 from formatter import format_data
-
 
 def validate_input_file(input_file: str) -> bool:
     """Перевіряє, чи існує файл, чи це TXT та чи він не порожній."""
@@ -18,7 +19,6 @@ def validate_input_file(input_file: str) -> bool:
         return False
     return True
 
-
 def get_output_file(input_file: str, output_arg: str | None) -> str:
     """Повертає шлях до output JSON файлу."""
     if output_arg:
@@ -27,12 +27,14 @@ def get_output_file(input_file: str, output_arg: str | None) -> str:
 
 def export_json(data, output_file):
     """Експортує дані у JSON файл з відступами."""
+    if not data:
+        print("Error: No data to export.")
+        return
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
     except Exception as e:
         print(f"Error saving JSON file: {e}")
-
 
 def run_cli():
     """
@@ -59,12 +61,18 @@ def run_cli():
         return
 
     # --- ANALYSIS PIPELINE ---
-    content = read_file(input_file)
-    data = get_modified_data(content)
-    statistics = get_statistics(data['tokens'], content)
-    output = format_data(input_file, data, statistics)
+    try:
+        content = read_file(input_file)
+        if not content:
+            return
+        data = get_modified_data(content)
+        statistics = get_statistics(data['tokens'], content)
+        output = format_data(input_file, data, statistics)
+    except Exception as e:
+        print(f"Error during analysis: {e}")
+        return
 
+    # --- JSON EXPORT ---
     export_json(output, output_file)
     print(f"Analysis completed successfully. Output saved to '{output_file}'.")
     return output
-
