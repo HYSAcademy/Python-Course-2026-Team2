@@ -50,11 +50,3 @@ mini-document-analyzer/
 | Kostiantyn Yesypenko | CLI parsing, input validation, JSON export, error handling, documentation |
 
 ---
-
-### 4️⃣ Optional improvements
-
-- Add a **“Success Criteria”** section so reviewers know what to check before approving the PR.  
-- Optionally, mention **Python version** at the top, e.g., `Python 3.11+ recommended`.  
-- Add badges if you want (build, Python version, license).  
-
----
