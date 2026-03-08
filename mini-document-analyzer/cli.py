@@ -20,9 +20,17 @@ def validate_input_file(input_file: str) -> bool:
     return True
 
 def get_output_file(input_file: str, output_arg: str | None) -> str:
-    """Returns the path to the JSON output file."""
+    """Return the path to the output JSON file.
+
+    If `output_arg` is not provided, the input filename (without its
+    extension) is used with the suffix `.analysis.json` appended.
+    If `output_arg` is given, any extension is stripped and `.json` is
+    added to the base name (so `report.txt` or `report.json` both produce
+    `report.json`).
+    """
     if output_arg:
-        return f"{output_arg}.json" if not output_arg.endswith(".json") else output_arg
+        base = os.path.splitext(output_arg)[0]
+        return f"{base}.json"
     return f"{os.path.splitext(input_file)[0]}.analysis.json"
 
 def export_json(data, output_file):
@@ -63,7 +71,8 @@ def run_cli():
     # --- ANALYSIS PIPELINE ---
     try:
         content = read_file(input_file)
-        if not content:
+        if not content.strip():
+            print("Error: File contains only whitespace.")
             return
         data = get_modified_data(content)
         statistics = get_statistics(data['tokens'], content)
