@@ -1,4 +1,3 @@
 Generic single-database configuration.
 
-Run 'alembic upgrade head' in Python-Course-2026-Team2/file-processing-ap directory to apply database schema.
 Run 'python seed.py' in Python-Course-2026-Team2/file-processing-api/src/file_processing_api/db directory to seed test data.
