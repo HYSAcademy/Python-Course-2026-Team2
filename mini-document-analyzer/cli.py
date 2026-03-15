@@ -1,9 +1,8 @@
 import json
 import os
 import argparse
-from analyzer.text_reader import read_file
-from analyzer.tokenizer import get_modified_data
-from analyzer.statistics import get_statistics
+
+from analyzer import read_file, get_modified_data, get_statistics
 from formatter import format_data
 
 def validate_input_file(input_file: str) -> bool:
