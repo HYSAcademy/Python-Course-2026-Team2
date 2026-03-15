@@ -18,15 +18,15 @@ Backend service for processing and storing files.
 ## Setup Instructions
 
 Run the following commands to start the project:
-
+```
 poetry install
 docker compose build
 docker compose up -d
 poetry run alembic upgrade head
-
+```
 
 ## Project Structure
-
+```
 file-processing-api/
 │
 ├── migrations/
@@ -46,11 +46,13 @@ file-processing-api/
 ├── poetry.lock
 ├── pyproject.toml
 └── README.md
-
+```
 ## Team
 
 
-| Developer            | Responsibility |
-|---------------------------------------|
-| Kateryna Hryhorieva  | 
-| Kostiantyn Yesypenko | 
+## 👥 Team
+
+| Developer | Area | Responsibilities |
+|-----------|------|------------------|
+| **Kateryna Hryhorieva** | Part 1 | Poetry project • FastAPI setup • Project structure • PostgreSQL configuration • Docker setup • Global exception middleware |
+| **Kostiantyn Yesypenko** | Part 2 | Upload endpoint • File validation • Archive extraction • Async processing • Database storage • API response |
