@@ -1,7 +1,5 @@
 from fastapi import FastAPI
-from sqlmodel import SQLModel
-from file_processing_api.db.database import engine
-from file_processing_api.api.archives import router as archives_router
+from api.archives import router as archives_router
 from fastapi.responses import JSONResponse
 from fastapi import Request
 
