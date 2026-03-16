@@ -1,12 +1,16 @@
 from fastapi import FastAPI
-from sqlmodel import SQLModel
-from db.database import engine
+from api.archives import router as archives_router
+from fastapi.responses import JSONResponse
+from fastapi import Request
 
-
-SQLModel.metadata.create_all(engine)
 
 app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"message": "Hello World"}
+app.include_router(archives_router)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=400,
+        content={"error": str(exc)}
+    )
