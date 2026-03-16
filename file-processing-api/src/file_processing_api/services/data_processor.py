@@ -1,6 +1,3 @@
-import zipfile
-import io
-
 from fastapi import UploadFile
 
 from file_processing_api.db.models import Archive, File

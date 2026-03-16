@@ -7,11 +7,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./src:/app/src
+      - .:/app
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+      PYTHONPATH: /app/src
 
   db:
     image: postgres:16
