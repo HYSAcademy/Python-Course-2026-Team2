@@ -1,7 +1,6 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 
-from file_processing_api.db.database import engine
 from file_processing_api.db.models import Archive, File
 from file_processing_api.db.session import async_session
 
@@ -9,7 +8,7 @@ from file_processing_api.db.session import async_session
 
 async def add_sample_data():
     async with async_session() as session:
-        archive = Archive(filename="my_archive.zip", uploaded_at=datetime.utcnow())
+        archive = Archive(filename="my_archive.zip", uploaded_at=datetime.now(UTC))
         session.add(archive)
         await session.commit()
         await session.refresh(archive)

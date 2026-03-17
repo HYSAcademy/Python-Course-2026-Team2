@@ -1,5 +1,4 @@
 from fastapi import UploadFile
-
 from file_processing_api.db.models import Archive, File
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -26,9 +25,8 @@ def extract_zip(content: bytes):
 
     return extracted
 
-async def process_archive(archive: UploadFile, session: AsyncSession):
-    contents = await archive.read()
-    archive = Archive(filename=archive.filename)
+async def process_archive(archive_name: str, contents:bytes, session: AsyncSession):
+    archive = Archive(filename=archive_name)
     session.add(archive)
 
     await session.flush()  # get archive.id

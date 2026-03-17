@@ -1,3 +1,5 @@
+import io
+import zipfile
 from typing import List
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -17,26 +19,34 @@ async def upload_archives(
     session: AsyncSession = Depends(get_session)
 ):
     results = []
+    invalid_archives = []
 
     for archive in archives:
-        is_validated = validate_archive(archive)
+        contents = await archive.read()
+        is_validated = validate_archive(archive, contents)
 
         if not is_validated:
+            invalid_archives.append(archive.filename)
             continue
 
-        try:
-            async with session.begin():  # transaction per archive
-                extracted = await process_archive(archive, session)
-            results.append({"filename": archive.filename, "files": extracted})
-        except ValueError:
-            raise HTTPException(400, "Invalid ZIP archive")
+        async with session.begin():  # transaction per archive
+            extracted = await process_archive(archive.filename, contents, session)
+        results.append({"filename": archive.filename, "files": extracted})
 
-    return {"archives": results}
+    return {
+        "archives": results,
+        "invalid_archives": invalid_archives
+    }
 
 
-def validate_archive(archive: UploadFile):
+def validate_archive(archive: UploadFile, contents: bytes):
     if archive.content_type not in ALLOWED_TYPES or not archive.filename.endswith(".zip"):
-        logger.warning("{}: Only ZIP archives allowed", archive.filename)
+        logger.warning("Invalid archive type or extension: {}", archive.filename)
         return False
 
-    return True
+    try:
+        with zipfile.ZipFile(io.BytesIO(contents)):
+            return True
+    except zipfile.BadZipFile:
+        logger.warning("Bad ZIP file: {}", archive.filename)
+        return False
