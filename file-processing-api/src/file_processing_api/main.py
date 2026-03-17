@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api.archives import router as archives_router
+from file_processing_api.api.archives import router as archives_router
 from fastapi.responses import JSONResponse
 from fastapi import Request
 
