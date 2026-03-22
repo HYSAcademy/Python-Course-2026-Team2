@@ -1,10 +1,8 @@
 import uuid
 
 import aiofiles
-from fastapi import UploadFile
-from loguru import logger
 
-from file_processing_api.db.models import Archive, File
+from file_processing_api.db.models import Archive, File, FileVector
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 import asyncio
@@ -39,24 +37,44 @@ async def process_archive(archive_name: str, contents: bytes, session: AsyncSess
     await session.flush()  # get archive.id
 
     extracted = await asyncio.to_thread(extract_files, contents)
+    uploaded_files = await asyncio.gather(*[
+        upload_file(file_data) for file_data in extracted
+    ])
 
-    for name, text in extracted:
+    for data in uploaded_files:
         db_file = File(
             archive_id=archive.id,
-            filename=name,
-            content=text
+            filename=data["filename"],
+            path=data["path"],
+            content=data["content"]
         )
         session.add(db_file)
 
     return [{"filename": name, "content": text} for name, text in extracted]
 
 
-async def upload_file(filename: str, text: str) -> str:
+async def upload_file(file_data: tuple[str, str]) -> dict:
+    filename, text = file_data
     path = f"/storage/files/{uuid.uuid4()}_{filename}"
-    logger.info(path, "PATH")
 
     async with semaphore:
         async with aiofiles.open(path, "w", encoding="utf-8") as f:
             await f.write(text)
 
-    return text
+    return {
+        "filename": filename,
+        "content": text,
+        "path": path
+    }
+
+async def save_vector(file_id: int, vector, session: AsyncSession) -> None:
+    vector_dict = dict(zip(
+        vector.indices.tolist(),
+        vector.data.tolist()
+    ))
+
+    db_vector = FileVector(
+        file_id=file_id,
+        vector=vector_dict
+    )
+    session.add(db_vector)

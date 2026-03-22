@@ -16,7 +16,8 @@ async def add_sample_data():
         file = File(
             archive_id=archive.id,
             filename="file1.txt",
-            content="Hello, world!"
+            content="Hello, world!",
+            path="/storage/files/file1.txt",
         )
         session.add(file)
         await session.commit()
