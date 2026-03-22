@@ -1,29 +1,23 @@
 import asyncio
 import uuid
-from typing import List
-
 import aiofiles
-from fastapi import APIRouter, UploadFile, File, Depends
-from loguru import logger
-from rq import Queue
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-from file_processing_api.redis_client import redis_connection
-from file_processing_api.services.data_processing import process_file
+from typing import List
+from fastapi import APIRouter, UploadFile, File
+from file_processing_api.services.tf_idf_indexing import TFIDFService
 from file_processing_api.services.file_validation import FileValidationService
 
-router = APIRouter(prefix="/files", tags=["files"])
-CHUNK_SIZE = 1024 * 1024
+tfidf_service = TFIDFService()
 
-q = Queue(connection=redis_connection)
+CHUNK_SIZE = 1024 * 1024
 semaphore = asyncio.Semaphore(25)
 
-@router.post("/upload")
-async def upload_files(files: List[UploadFile] = File(...)):
-    logger.info(f"START")
+router = APIRouter(prefix="/files", tags=["files"])
 
+@router.post("/index")
+async def index_files(files: List[UploadFile] = File(...)):
     corpus = await asyncio.gather(*[upload_file(file) for file in files])
 
+    tfidf_service.fit(corpus)
 
 
 async def upload_file(file: UploadFile):
@@ -38,6 +32,6 @@ async def upload_file(file: UploadFile):
                 await f.write(content)
                 chunks.append(content.decode("utf-8", errors="ignore"))
 
-    return " ".join(chunks)
+    return "".join(chunks)
 
 
