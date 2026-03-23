@@ -1,12 +1,17 @@
+from pathlib import Path
+
+import joblib
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from file_processing_api.api.archives import router as archives_router
 from file_processing_api.db.session import engine as async_engine
 from sqlmodel import SQLModel
-import asyncio
 
 # Lifespan context manager for startup/shutdown
 from contextlib import asynccontextmanager
+
+from file_processing_api.services.tf_idf_indexing import tfidf_service
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,6 +19,10 @@ async def lifespan(app: FastAPI):
     async with async_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     print("Database tables ensured!")
+
+
+    if Path("tfidf_vectorizer.pkl").exists():
+        tfidf_service.vectorizer = joblib.load("tfidf_vectorizer.pkl")
     
     yield  # This is where the app runs
 
