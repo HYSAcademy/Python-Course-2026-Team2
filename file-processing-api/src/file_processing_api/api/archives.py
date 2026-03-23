@@ -60,7 +60,25 @@ async def search_query(
     top_k: int = Query(5),
     session: AsyncSession = Depends(get_session)
 ):
-    pass
+    vectors = await get_all_vectors(session)
+
+    if not vectors:
+        return {"results": [], "message": "No vectors found"}
+
+    query_vec = tfidf_service.transform([query])
+
+    similarities = tfidf_service.get_similarities(query_vec, vectors)
+    top_indices = similarities.argsort()[::-1][:top_k]
+
+    results = [
+        {
+            "file_id": vectors[i].file_id,
+            "score": float(similarities[i])
+        }
+        for i in top_indices if float(similarities[i])
+    ]
+
+    return {"results": results}
 
 
 

@@ -1,6 +1,7 @@
 import uuid
 
 import aiofiles
+from sqlalchemy.dialects.postgresql import insert
 
 from file_processing_api.db.models import Archive, File, FileVector
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -73,8 +74,12 @@ async def save_vector(file_id: int, vector, session: AsyncSession) -> None:
         vector.data.tolist()
     ))
 
-    db_vector = FileVector(
+    stmt = insert(FileVector).values(
         file_id=file_id,
         vector=vector_dict
+    ).on_conflict_do_update(
+        index_elements=["file_id"],
+        set_={"vector": vector_dict}
     )
-    session.add(db_vector)
+
+    await session.execute(stmt)
