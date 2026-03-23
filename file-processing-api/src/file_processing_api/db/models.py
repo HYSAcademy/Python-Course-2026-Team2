@@ -20,5 +20,5 @@ class File(SQLModel, table=True):
 
 class FileVector(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    file_id: int = Field(foreign_key="file.id", index=True)
+    file_id: int = Field(foreign_key="file.id", index=True, unique=True)
     vector: Dict[int, float] = Field(sa_column=Column(JSON, nullable=False))

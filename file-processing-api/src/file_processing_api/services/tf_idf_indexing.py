@@ -18,11 +18,16 @@ class TFIDFService:
         return self.vectorizer.transform(documents)
 
     def get_similarities(self, query_vec, vectors):
-        stored_matrix = np.vstack([
-            v.vector.toarray()[0] if hasattr(v.vector, "toarray") else v.vector
-            for v in vectors
-        ])
+        vocab_size = len(self.vectorizer.vocabulary_)
 
+        rows = []
+        for v in vectors:
+            dense = np.zeros(vocab_size, dtype=float)
+            for idx, score in v.vector.items():
+                dense[int(idx)] = score
+            rows.append(dense)
+
+        stored_matrix = np.vstack(rows)
         return cosine_similarity(query_vec, stored_matrix).flatten()
 
 tfidf_service = TFIDFService()
