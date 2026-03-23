@@ -1,17 +1,19 @@
-import io
-import zipfile
+import asyncio
 from typing import List
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from sqlmodel.ext.asyncio.session import AsyncSession
-from file_processing_api.db.session import get_session
-from file_processing_api.services.data_processor import process_archive
+from fastapi import APIRouter, UploadFile, File, Depends
 from loguru import logger
+from sqlmodel.ext.asyncio.session import AsyncSession
+from starlette.responses import JSONResponse
 
-logger.add("logs.log", rotation="5 MB", enqueue=True)
+from file_processing_api.db.session import get_session
+from file_processing_api.services.data_processing import extract_files, process_archive, upload_file, save_vector
+from file_processing_api.services.file_service import get_files_by_archive_id
+from file_processing_api.services.tf_idf_indexing import TFIDFService
+from file_processing_api.services.file_validation import FileValidationService
+
+tfidf_service = TFIDFService()
 
 router = APIRouter(prefix="/archives", tags=["archives"])
-ALLOWED_TYPES = ["application/zip"]
-
 
 @router.post("/upload")
 async def upload_archives(
@@ -19,34 +21,37 @@ async def upload_archives(
     session: AsyncSession = Depends(get_session)
 ):
     results = []
-    invalid_archives = []
 
     for archive in archives:
+        await FileValidationService.validate(archive)
         contents = await archive.read()
-        is_validated = validate_archive(archive, contents)
 
-        if not is_validated:
-            invalid_archives.append(archive.filename)
-            continue
-
-        async with session.begin():  # transaction per archive
+        async with session.begin():
             extracted = await process_archive(archive.filename, contents, session)
         results.append({"filename": archive.filename, "files": extracted})
 
     return {
         "archives": results,
-        "invalid_archives": invalid_archives
     }
 
 
-def validate_archive(archive: UploadFile, contents: bytes):
-    if archive.content_type not in ALLOWED_TYPES or not archive.filename.endswith(".zip"):
-        logger.warning("Invalid archive type or extension: {}", archive.filename)
-        return False
+@router.post("/index/{archive_id}")
+async def index_archive(archive_id: int, session: AsyncSession = Depends(get_session)):
+    files = await get_files_by_archive_id(archive_id, session)
+    corpus = [file.content for file in files if file.content]
+    tfidf_service.fit(corpus)
+    matrix = tfidf_service.matrix
 
-    try:
-        with zipfile.ZipFile(io.BytesIO(contents)):
-            return True
-    except zipfile.BadZipFile:
-        logger.warning("Bad ZIP file: {}", archive.filename)
-        return False
+    await asyncio.gather(*[
+        save_vector(file.id, matrix[i], session) for i, file in enumerate(files)
+    ])
+
+    await session.commit()
+    # vocab = tfidf_service.vectorizer.get_feature_names_out()
+    # logger.info(f"58 WORD {vocab[58]}")
+    # logger.info(f"69 WORD {vocab[69]}") // Save for presentation
+
+    return JSONResponse(status_code=200, content={"message": "ok"})
+
+
+
