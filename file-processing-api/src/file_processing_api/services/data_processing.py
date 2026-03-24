@@ -1,9 +1,12 @@
+import os
 import uuid
 
 import aiofiles
 from sqlalchemy.dialects.postgresql import insert
 
 from file_processing_api.db.models import Archive, File, FileVector
+from file_processing_api.db.session import async_session
+
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 import asyncio
@@ -19,7 +22,7 @@ def extract_files(content: bytes):
 
     with zipfile.ZipFile(io.BytesIO(content)) as zip_ref:
         for filename in zip_ref.namelist():
-            clean_filename = filename.split('/')[-1]
+            clean_filename = filename.split("/")[-1]
 
             if not clean_filename:
                 continue
@@ -38,16 +41,16 @@ async def process_archive(archive_name: str, contents: bytes, session: AsyncSess
     await session.flush()  # get archive.id
 
     extracted = await asyncio.to_thread(extract_files, contents)
-    uploaded_files = await asyncio.gather(*[
-        upload_file(file_data) for file_data in extracted
-    ])
+    uploaded_files = await asyncio.gather(
+        *[upload_file(file_data) for file_data in extracted]
+    )
 
     for data in uploaded_files:
         db_file = File(
             archive_id=archive.id,
             filename=data["filename"],
             path=data["path"],
-            content=data["content"]
+            content=data["content"],
         )
         session.add(db_file)
 
@@ -58,28 +61,37 @@ async def upload_file(file_data: tuple[str, str]) -> dict:
     filename, text = file_data
     path = f"/storage/files/{uuid.uuid4()}_{filename}"
 
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
     async with semaphore:
         async with aiofiles.open(path, "w", encoding="utf-8") as f:
             await f.write(text)
 
-    return {
-        "filename": filename,
-        "content": text,
-        "path": path
-    }
+    return {"filename": filename, "content": text, "path": path}
+
 
 async def save_vector(file_id: int, vector, session: AsyncSession) -> None:
-    vector_dict = dict(zip(
-        vector.indices.tolist(),
-        vector.data.tolist()
-    ))
+    vector_dict = dict(zip(vector.indices.tolist(), vector.data.tolist()))
 
-    stmt = insert(FileVector).values(
-        file_id=file_id,
-        vector=vector_dict
-    ).on_conflict_do_update(
-        index_elements=["file_id"],
-        set_={"vector": vector_dict}
+    stmt = (
+        insert(FileVector)
+        .values(file_id=file_id, vector=vector_dict)
+        .on_conflict_do_update(
+            index_elements=[
+                "file_id"
+            ],  # <- use index/column instead of constraint name
+            set_={"vector": vector_dict},
+        )
     )
 
-    await session.execute(stmt)
+    await session.exec(stmt)
+
+
+semaphore = asyncio.Semaphore(10)
+
+
+async def save_vector_parallel(file_id: int, vector):
+    async with semaphore:
+        async with async_session() as session:
+            await save_vector(file_id, vector, session)
+            await session.commit()

@@ -1,5 +1,4 @@
 import numpy as np
-from loguru import logger
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -29,5 +28,6 @@ class TFIDFService:
 
         stored_matrix = np.vstack(rows)
         return cosine_similarity(query_vec, stored_matrix).flatten()
+
 
 tfidf_service = TFIDFService()

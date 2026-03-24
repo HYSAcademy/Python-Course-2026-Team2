@@ -9,6 +9,7 @@ async def get_all_files(session: AsyncSession):
 
     return result.all()
 
+
 async def get_all_vectors(session: AsyncSession):
     result = await session.exec(select(FileVector))
 

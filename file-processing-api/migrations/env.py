@@ -12,8 +12,6 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from sqlmodel import SQLModel
 
-from file_processing_api.db.models import Archive, File
-
 
 # Alembic config object
 config = context.config
