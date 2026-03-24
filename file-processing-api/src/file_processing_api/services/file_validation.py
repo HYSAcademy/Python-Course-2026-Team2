@@ -5,14 +5,17 @@ import magic
 from fastapi import UploadFile, HTTPException
 
 MAX_FILE_SIZE = 10 * 1024 * 1024
-ALLOWED_ZIP_MIMES = ["application/zip", "application/x-zip-compressed",  "application/octet-stream"]
+ALLOWED_ZIP_MIMES = [
+    "application/zip",
+    "application/x-zip-compressed",
+    "application/octet-stream",
+]
 
 
 class FileValidationService:
-
     @staticmethod
     async def validate(file: UploadFile) -> None:
-        await FileValidationService. _validate_extension(file)
+        await FileValidationService._validate_extension(file)
         await FileValidationService._validate_mime(file)
         await FileValidationService._validate_archive(file)
 
@@ -46,13 +49,20 @@ class FileValidationService:
 
                 for info in files:
                     if info.filename.startswith("/") or ".." in info.filename:
-                        raise HTTPException(status_code=400, detail="Unsafe file path in ZIP")
+                        raise HTTPException(
+                            status_code=400, detail="Unsafe file path in ZIP"
+                        )
 
                     if not info.filename.lower().endswith(".txt"):
-                        raise HTTPException(status_code=400, detail="ZIP must contain only .txt files")
+                        raise HTTPException(
+                            status_code=400, detail="ZIP must contain only .txt files"
+                        )
 
                     if info.file_size > MAX_FILE_SIZE:
-                        raise HTTPException(status_code=400, detail=f"{info.filename} exceeds max file size")
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"{info.filename} exceeds max file size",
+                        )
 
         except zipfile.BadZipFile:
             raise HTTPException(status_code=400, detail="Invalid ZIP archive")

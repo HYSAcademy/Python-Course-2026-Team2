@@ -35,6 +35,36 @@ services:
     command: [ "redis-server", "--appendonly", "yes" ]
     volumes:
       - redis_data:/data
+  
+  worker_uploads:
+    build: .
+    command: rq worker uploads
+    depends_on:
+      - fastapi
+      - redis
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PYTHONPATH: ${PYTHONPATH}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/app
+      - ./storage:/storage
+
+  worker_indexing:
+    build: .
+    command: rq worker indexing
+    depends_on:
+      - fastapi
+      - redis
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PYTHONPATH: ${PYTHONPATH}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/app
+      - ./storage:/storage
 
 volumes:
   postgres_data:
