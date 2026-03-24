@@ -1,7 +1,7 @@
-import os
 import uuid
 
 import aiofiles
+from fastapi import UploadFile
 from sqlalchemy.dialects.postgresql import insert
 
 from file_processing_api.db.models import Archive, File, FileVector
@@ -13,9 +13,21 @@ import asyncio
 import zipfile
 import io
 
-CHUNK_SIZE = 1024 * 1024
-semaphore = asyncio.Semaphore(25)
+from file_processing_api.services.file_validation import FileValidationService
 
+CHUNK_SIZE = 1024 * 1024
+ARCHIVE_SEMAPHORE = asyncio.Semaphore(8)
+FILE_WRITE_SEMAPHORE = asyncio.Semaphore(24)
+
+
+async def handle_archive(archive: UploadFile, session_factory) -> None:
+    async with ARCHIVE_SEMAPHORE:
+        await FileValidationService.validate(archive)
+        contents = await archive.read()
+
+        async with session_factory() as session:
+            async with session.begin():
+                await process_archive(archive.filename, contents, session)
 
 def extract_files(content: bytes):
     extracted = []
@@ -38,21 +50,23 @@ async def process_archive(archive_name: str, contents: bytes, session: AsyncSess
     archive = Archive(filename=archive_name)
     session.add(archive)
 
-    await session.flush()  # get archive.id
+    await session.flush()
 
     extracted = await asyncio.to_thread(extract_files, contents)
     uploaded_files = await asyncio.gather(
         *[upload_file(file_data) for file_data in extracted]
     )
 
-    for data in uploaded_files:
-        db_file = File(
+    files = [
+        File(
             archive_id=archive.id,
             filename=data["filename"],
             path=data["path"],
             content=data["content"],
         )
-        session.add(db_file)
+        for data in uploaded_files
+    ]
+    session.add_all(files)
 
     return [{"filename": name, "content": text} for name, text in extracted]
 
@@ -61,9 +75,7 @@ async def upload_file(file_data: tuple[str, str]) -> dict:
     filename, text = file_data
     path = f"/storage/files/{uuid.uuid4()}_{filename}"
 
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    async with semaphore:
+    async with FILE_WRITE_SEMAPHORE:
         async with aiofiles.open(path, "w", encoding="utf-8") as f:
             await f.write(text)
 

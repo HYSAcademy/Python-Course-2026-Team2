@@ -1,18 +1,15 @@
 import asyncio
+import datetime
 from typing import List
 
 import joblib
 from fastapi import APIRouter, UploadFile, File, Depends, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from file_processing_api.db.session import get_session
-from file_processing_api.services.data_processing import (
-    process_archive,
-    save_vector_parallel,
-)
+from file_processing_api.db.session import get_session, get_session_factory
+from file_processing_api.services.data_processing import (save_vector_parallel, handle_archive,)
 from file_processing_api.services.file_service import get_all_files, get_all_vectors
 from file_processing_api.services.tf_idf_indexing import tfidf_service
-from file_processing_api.services.file_validation import FileValidationService
 
 
 router = APIRouter(prefix="/archives", tags=["archives"])
@@ -20,20 +17,24 @@ router = APIRouter(prefix="/archives", tags=["archives"])
 
 @router.post("/upload")
 async def upload_archives(
-    archives: List[UploadFile] = File(...), session: AsyncSession = Depends(get_session)
+    archives: List[UploadFile] = File(...), session_factory=Depends(get_session_factory)
 ):
-    results = []
+    start_at = datetime.datetime.now()
+    tasks = [handle_archive(archive, session_factory) for archive in archives]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    for archive in archives:
-        await FileValidationService.validate(archive)
-        contents = await archive.read()
-
-        async with session.begin():
-            extracted = await process_archive(archive.filename, contents, session)
-        results.append({"filename": archive.filename, "files": extracted})
+    processed = []
+    for archive, result in zip(archives, results):
+        if isinstance(result, Exception):
+            processed.append(
+                {"filename": archive.filename, "status": 500, "error": str(result)}
+            )
+        else:
+            processed.append({"filename": archive.filename, "status": 200})
 
     return {
-        "archives": results,
+        "archives": processed,
+        "process_time": (datetime.datetime.now() - start_at).total_seconds(),
     }
 
 
