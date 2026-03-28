@@ -20,8 +20,8 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(SQLModel.metadata.create_all)
     print("Database tables ensured!")
 
-    if Path("tfidf_vectorizer.pkl").exists():
-        tfidf_service.vectorizer = joblib.load("tfidf_vectorizer.pkl")
+    if Path("../../rag-service/app/models/tfidf_vectorizer.pkl").exists():
+        tfidf_service.vectorizer = joblib.load("../../rag-service/app/models/tfidf_vectorizer.pkl")
 
     yield  # This is where the app runs
 
@@ -35,7 +35,6 @@ app = FastAPI(lifespan=lifespan)
 
 # Include routers
 app.include_router(archives_router)
-
 
 # Global exception handler
 @app.exception_handler(Exception)
