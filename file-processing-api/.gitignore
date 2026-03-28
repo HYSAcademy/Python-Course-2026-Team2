@@ -8,4 +8,4 @@ __pycache__/
 .env
 !.env.example
 /storage/files/
-rag-service/app/models/tfidf_vectorizer.pkl
+services/rag-service/app/models/tfidf_vectorizer.pkl
