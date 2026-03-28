@@ -25,18 +25,14 @@ async def lifespan(app: FastAPI):
 
     yield  # This is where the app runs
 
-    # Shutdown code (optional)
     await async_engine.dispose()
     print("Database connection disposed!")
 
 
-# Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
-# Include routers
 app.include_router(archives_router)
 
-# Global exception handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=400, content={"error": str(exc)})

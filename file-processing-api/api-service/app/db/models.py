@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional
+
+from pgvector.sqlalchemy import Vector
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, Text, JSON, String
+from sqlalchemy import Column, Text, String
 
 
 class Archive(SQLModel, table=True):
@@ -21,4 +23,4 @@ class File(SQLModel, table=True):
 class FileVector(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     file_id: int = Field(foreign_key="file.id", index=True, unique=True)
-    vector: Dict[int, float] = Field(sa_column=Column(JSON, nullable=False))
+    vector: list[float] = Field(sa_column=Column(Vector(1536), nullable=False))

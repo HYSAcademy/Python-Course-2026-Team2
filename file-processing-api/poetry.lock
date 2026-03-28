@@ -1504,6 +1504,21 @@ re2 = ["google-re2 (>=1.1)"]
 tests = ["pytest (>=9)", "typing-extensions (>=4.15)"]
 
 [[package]]
+name = "pgvector"
+version = "0.4.2"
+description = "pgvector support for Python"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pgvector-0.4.2-py3-none-any.whl", hash = "sha256:549d45f7a18593783d5eec609ea1684a724ba8405c4cb182a0b2b08aeff04e08"},
+    {file = "pgvector-0.4.2.tar.gz", hash = "sha256:322cac0c1dc5d41c9ecf782bd9991b7966685dee3a00bc873631391ed949513a"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "platformdirs"
 version = "4.9.4"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
@@ -2917,5 +2932,5 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.12"
-content-hash = "e30f4776aa83abe421f1524151a0540ad0656fe8a9bca1cb2b458731262f32be"
+python-versions = ">=3.12,<4.0"
+content-hash = "ba67d3a2aa733f8d394cf40166a623d19eb7588a86033c42ee98c44e2005a738"

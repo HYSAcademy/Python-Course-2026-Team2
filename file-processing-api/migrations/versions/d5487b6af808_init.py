@@ -1,8 +1,8 @@
-"""initial migration
+"""init
 
-Revision ID: 484ee4ac94e4
-Revises:
-Create Date: 2026-03-23 20:59:48.050840
+Revision ID: d5487b6af808
+Revises: 
+Create Date: 2026-03-28 16:03:25.013315
 
 """
 
@@ -11,7 +11,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel
-
+from pgvector.sqlalchemy import Vector
 
 # revision identifiers, used by Alembic.
 revision: str = "484ee4ac94e4"
@@ -47,7 +47,7 @@ def upgrade() -> None:
         "filevector",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("file_id", sa.Integer(), nullable=False),
-        sa.Column("vector", sa.JSON(), nullable=False),
+        sa.Column("vector", Vector(1536), nullable=False),
         sa.ForeignKeyConstraint(
             ["file_id"],
             ["file.id"],

@@ -26,13 +26,13 @@ RUN poetry config virtualenvs.create false \
     && poetry install --no-root --only main
 
 # Copy only source code
-COPY ./src /app/src
+COPY . /app
 
 # Expose port FastAPI runs on
 EXPOSE 8000
 
 # Set working directory to where main.py is
-WORKDIR /app/src/file_processing_api
+WORKDIR /app/api-service/app
 
 # Run FastAPI with reload (dev)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
