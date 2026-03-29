@@ -3,14 +3,15 @@ from pathlib import Path
 import joblib
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from file_processing_api.api.archives import router as archives_router
-from file_processing_api.db.session import engine as async_engine
+
+from services.api_service.app.api.archives import router as archives_router
+from services.api_service.app.db import engine as async_engine
 from sqlmodel import SQLModel
 
 # Lifespan context manager for startup/shutdown
 from contextlib import asynccontextmanager
 
-from file_processing_api.services.tf_idf_indexing import tfidf_service
+from services.rag_service.app.services.tf_idf_indexing import tfidf_service
 
 
 @asynccontextmanager
@@ -20,8 +21,8 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(SQLModel.metadata.create_all)
     print("Database tables ensured!")
 
-    if Path("../../rag-service/app/models/tfidf_vectorizer.pkl").exists():
-        tfidf_service.vectorizer = joblib.load("../../rag-service/app/models/tfidf_vectorizer.pkl")
+    if Path("../../rag_service/app/models/tfidf_vectorizer.pkl").exists():
+        tfidf_service.vectorizer = joblib.load("../../rag_service/app/models/tfidf_vectorizer.pkl")
 
     yield  # This is where the app runs
 

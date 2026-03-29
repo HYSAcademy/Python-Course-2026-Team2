@@ -1,11 +1,15 @@
+import json
 import uuid
 
 import aiofiles
 from fastapi import UploadFile
 from sqlalchemy.dialects.postgresql import insert
 
-from file_processing_api.db.models import Archive, File, FileVector
-from file_processing_api.db.session import async_session
+from services.api_service.app.db.session import async_session
+from services.api_service.app.db.models import Archive, File
+from services.api_service.app.services.file_validation import FileValidationService
+from redis_client.publisher import publish_message
+
 
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -13,7 +17,6 @@ import asyncio
 import zipfile
 import io
 
-from file_processing_api.services.file_validation import FileValidationService
 
 CHUNK_SIZE = 1024 * 1024
 ARCHIVE_SEMAPHORE = asyncio.Semaphore(8)
@@ -62,11 +65,12 @@ async def process_archive(archive_name: str, contents: bytes, session: AsyncSess
             archive_id=archive.id,
             filename=data["filename"],
             path=data["path"],
-            content=data["content"],
         )
         for data in uploaded_files
     ]
     session.add_all(files)
+
+    publish_message("files_uploaded", {"archive_id": archive.id})
 
     return [{"filename": name, "content": text} for name, text in extracted]
 

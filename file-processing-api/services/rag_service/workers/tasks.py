@@ -10,7 +10,7 @@ from file_processing_api.db.session import get_session
 
 # Підключення до Redis
 # Read Redis host/port from env
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")  # default to 'redis' for Docker
+REDIS_HOST = os.getenv("REDIS_HOST", "redis_client")  # default to 'redis_client' for Docker
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 
 # Single Redis connection
@@ -51,3 +51,15 @@ def run_indexing_task():
 def enqueue_indexing():
     """Додаємо задачу у Redis Queue"""
     queue.enqueue(run_indexing_task)
+
+
+async def listen():
+    pubsub = r.pubsub()
+    await pubsub.subscribe("file_events")
+
+    async for message in pubsub.listen():
+        if message["type"] == "message":
+            data = json.loads(message["data"])
+
+            if data["event"] == "file_uploaded":
+                embedding = await get_embedding(data["content"])

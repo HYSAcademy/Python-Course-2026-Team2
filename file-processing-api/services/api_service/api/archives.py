@@ -6,10 +6,9 @@ import joblib
 from fastapi import APIRouter, UploadFile, File, Depends, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from file_processing_api.db.session import get_session, get_session_factory
-from file_processing_api.services.data_processing import (save_vector_parallel, handle_archive,)
-from file_processing_api.services.file_service import get_all_files, get_all_vectors
-from file_processing_api.services.tf_idf_indexing import tfidf_service
+
+from services.api_service.app.db import get_session_factory, get_session
+from services.api_service.app.services.data_processing import handle_archive
 
 
 router = APIRouter(prefix="/archives", tags=["archives"])
@@ -31,6 +30,7 @@ async def upload_archives(
             )
         else:
             processed.append({"filename": archive.filename, "status": 200})
+            publish_message("files_uploaded", {"archive_id": archive.id})
 
     return {
         "archives": processed,
@@ -82,9 +82,6 @@ async def search_query(
 
 @router.post("/index/background")
 async def index_background():
-    """
-    Запускаємо TF-IDF індексацію в фоні через Redis Queue
-    """
     from file_processing_api.workers.tasks import enqueue_indexing
 
     enqueue_indexing()
