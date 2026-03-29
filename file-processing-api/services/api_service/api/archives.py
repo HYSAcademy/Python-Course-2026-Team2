@@ -1,14 +1,13 @@
 import asyncio
 import datetime
+import joblib
+
 from typing import List
 
-import joblib
 from fastapi import APIRouter, UploadFile, File, Depends, Query
 from sqlmodel.ext.asyncio.session import AsyncSession
-
-
-from services.api_service.app.db import get_session_factory, get_session
-from services.api_service.app.services.data_processing import handle_archive
+from services.api_service.db import get_session_factory, get_session
+from services.api_service.services.data_processing import handle_archive
 
 
 router = APIRouter(prefix="/archives", tags=["archives"])
@@ -30,7 +29,6 @@ async def upload_archives(
             )
         else:
             processed.append({"filename": archive.filename, "status": 200})
-            publish_message("files_uploaded", {"archive_id": archive.id})
 
     return {
         "archives": processed,
