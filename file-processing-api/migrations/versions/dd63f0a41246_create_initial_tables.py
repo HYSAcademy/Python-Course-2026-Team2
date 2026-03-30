@@ -26,6 +26,7 @@ def upgrade() -> None:
         sa.Column("archive_id", sa.Integer(), sa.ForeignKey("archive.id"), nullable=False),
         sa.Column("filename", sa.String(length=255), nullable=False),
         sa.Column("path", sa.String(length=1024), nullable=False),
+        sa.Column("content", sa.Text, nullable=False)
     )
 
     op.create_table(

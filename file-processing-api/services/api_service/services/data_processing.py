@@ -64,6 +64,7 @@ async def process_archive(archive_name: str, contents: bytes, session: AsyncSess
             archive_id=archive.id,
             filename=data["filename"],
             path=data["path"],
+            content=data["content"]
         )
         for data in uploaded_files
     ]

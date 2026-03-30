@@ -10,6 +10,7 @@ class EmbeddingService:
         return vectors[0]
 
     def embed_texts(self, texts: List[str], batch_size: int = 100) -> List[list[float]]:
+        texts = [t.strip() for t in texts if t and t.strip()]
         embeddings = []
 
         for i in range(0, len(texts), batch_size):
