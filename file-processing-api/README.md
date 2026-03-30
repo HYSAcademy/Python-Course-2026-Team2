@@ -23,6 +23,8 @@ poetry install
 docker compose build
 docker compose up -d
 poetry run alembic upgrade head
+
+in db run CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 ## Project Structure
