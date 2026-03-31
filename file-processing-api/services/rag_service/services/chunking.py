@@ -7,7 +7,7 @@ def word_splitter(source_text: str) -> List[str]:
 
     return re.split(r'\s', source_text)
 
-def get_chunks_fixed_size(text: str, chunk_size: int) -> List[str]:
+def get_chunks_fixed_size(text: str, chunk_size: int = 10) -> List[str]:
     words = word_splitter(text)
     chunks = []
 

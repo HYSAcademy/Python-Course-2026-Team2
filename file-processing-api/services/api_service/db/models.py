@@ -19,6 +19,7 @@ class File(SQLModel, table=True):
     archive_id: int = Field(foreign_key="archive.id", index=True)
     filename: str = Field(index=True, max_length=255, nullable=False)
     path: str = Field(index=True, max_length=1024, nullable=False)
+    content: str = Field(sa_column=Column(Text, nullable=False))
 
     chunks: List["FileChunk"] = Relationship(back_populates="file")
 
